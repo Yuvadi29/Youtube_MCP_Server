@@ -60,7 +60,7 @@ class VideoResults(BaseModel):
     videos: list[VideoInfo] = Field(..., description="Video Information")
 
 
-def extreact_video_id(input_str: str) -> str | None:
+def extract_video_id(input_str: str) -> str | None:
     """
     Extract Youtube Video ID from a URL or ID String
 
@@ -96,7 +96,7 @@ class YoutubeTool:
     SCOPES = ["https://www.googleapis.com/auth/youtube.readonly"]
 
     def __init__(self, client_secret: str) -> None:
-        self.client_secret - client_secret
+        self.client_secret = client_secret
         self._init_youtube_service()
 
     def _init_youtube_service(self):
@@ -109,14 +109,9 @@ class YoutubeTool:
         if not self.service:
             raise Exception("Failed to create Youtube Service")
 
-    @property
-    def youtube_service(self) -> Resource:
-        """
-        Return Youtube Data API service instance
-        """
         return self.service
 
-    def get_channel_info(self, channel_id: str) -> ChannelInfo:
+    def get_channel_info(self, channel_id: str) -> str:
         """
         Get Information about a Youtube Channel based on the provided Channel ID.
 
@@ -311,7 +306,7 @@ class YoutubeTool:
                 channel_id = item["id"].get("channelId")
                 channel_title = item["snippet"].get("channelTitle")
                 video_id = item["id"].get("videoId")
-                video_title = item["snippet"].get("itle")
+                video_title = item["snippet"].get("title")
                 video_description = item["snippet"].get("description")
                 video_published = item["snippet"].get("publishTime")
                 video_info = VideoInfo(
@@ -338,7 +333,7 @@ class YoutubeTool:
         """
 
         if len(video_ids) == 1:
-            video_ids = extreact_video_id(video_ids)
+            video_ids = extract_video_id(video_ids)
             if not video_ids:
                 return "Error: Invalid Video ID or Url"
 
@@ -352,7 +347,7 @@ class YoutubeTool:
             request = self.service.videos().list(
                 part="id,snippet,contentDetails,statistics,paidProductPlacementDetails,TopicDetails",
                 id=video_ids,
-                maxResulst=current_max,
+                maxResults=current_max,
                 pageToken=next_page_token,
             )
             response = request.execute()

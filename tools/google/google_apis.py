@@ -6,7 +6,7 @@ from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 
 
-def create_service(client_secret_file, api_name, api_version, *scopes, prefix=""):
+def create_service(client_secret_file, api_name, api_version, *scopes, prefix=''):
     """
     Create a Google API service instance.
 
@@ -28,7 +28,7 @@ def create_service(client_secret_file, api_name, api_version, *scopes, prefix=""
 
     creds = None
     working_dir = os.getcwd()
-    token_dir = "token files"
+    token_dir = "token_files"
     token_file = f"token_{API_SERVICE_NAME}_{API_VERSION}{prefix}.json"
 
     # Check if token dir exists first, if not, create the folder
@@ -52,7 +52,7 @@ def create_service(client_secret_file, api_name, api_version, *scopes, prefix=""
 
     try:
         service = build(
-            API_SERVICE_NAME, API_VERSION, credentials=creds, static_discovery=false
+            API_SERVICE_NAME, API_VERSION, credentials=creds, static_discovery=False
         )
         return service
     except Exception as e:

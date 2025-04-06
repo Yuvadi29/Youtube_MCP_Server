@@ -15,9 +15,7 @@ mcp = FastMCP(
     ],
 )
 
-yt_tool = YoutubeTool(
-    r"/Users/adityatrivedi/Desktop/Developer/Youtube-MCP-Server/client_secret.json"
-)
+yt_tool = YoutubeTool(r"/Users/adityatrivedi/Desktop/Developer/Youtube-MCP-Server/client_secret.json")
 
 mcp.add_tool(
     yt_tool.get_video_info,
