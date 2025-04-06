@@ -115,3 +115,101 @@ class YoutubeTool:
         Return Youtube Data API service instance
         """
         return self.service
+
+    def get_channel_info(self, channel_id: str) -> ChannelInfo:
+        """
+        Get Information about a Youtube Channel based on the provided Channel ID.
+
+        Args:
+            channel_id: The ID of Youtube Channel.
+
+        Returns:
+            ChannelInfo: Information about the Youtube Channel
+        """
+
+        if channel_id.startswith("UC"):
+            request = self.service.channels().list(
+                part="snippet, statistics", id=channel_id
+            )
+        elif channel_id.startswith("@"):
+            request = self.service.channels().list(
+                part="snippet, statistics", forHandle=channel_id
+            )
+        else:
+            return "Invalid Channel ID"
+
+        response = request.execute()
+
+        channel_info = ChannelInfo(
+            channel_id=response["items"][0].get("id"),
+            channel_title=response["items"][0]["snippet"].get("title"),
+            description=response["items"][0]["snippet"].get("description"),
+            published_at=response["items"][0]["snippet"].get("publishedAt"),
+            country=response["items"][0]["snippet"].get("country"),
+            view_count=response["items"][0]["statistics"].get("viewCount"),
+            subscriber_count=response["items"][0]["statistics"].get("subscriberCount"),
+            video_count=response["items"][0]["statistics"].get("videoCount"),
+        )
+
+        return channel_info.model_dump_json()
+
+    def search_channel(
+        self,
+        channel_name: str,
+        published_after: str = None,
+        published_before: str = None,
+        region_code: str = "US",
+        order: str = "relevance",
+        max_results: int = 50,
+    ) -> str:
+        """
+        Searches for Youtube Channels based on provided channel Name.
+
+        Args:
+            channel_name: The name of the channel to search for.
+            order: The order in which to return results. Options are date, rating, relevance, title, videoCount and viewCount
+            max_results: THe maximum number of results to return
+        """
+
+        lst = []
+        total_results = 0
+        next_page_token = None
+
+        while len(lst) < max_results:
+            current_max = min(50, max_results - len(lst))
+
+            request = self.service.search().list(
+                part="snippet",
+                q=channel_name,
+                type="channel",
+                maxResults=current_max,
+                order=order,
+                publishedAfter=published_after,
+                publishedBefore=published_before,
+                regionCode=region_code,
+                pageToken=next_page_token,
+            )
+            response = request.execute()
+
+            for item in response["items"]:
+                channel_id = item["id"].get("channelId")
+                channel_title = item["snippet"].get("title")
+                channel_description = item["snippet"].get("description")
+                channel_published_at = item["snippet"].get("publishedAt")
+                channel_info = ChannelInfo(
+                    channel_id=channel_id,
+                    channel_title=channel_title,
+                    description=channel_description,
+                    published_at=channel_published_at,
+                )
+                lst.append(channel_info)
+
+            total_results = response["pageInfo"]["totalResults"]
+            next_page_token = response.get("nextPageToken")
+
+            if not next_page_token:
+                break
+
+        return ChannelResults(
+            total_results=total_results, channels=lst
+        ).model_dump_json()
