@@ -405,18 +405,20 @@ class YoutubeTool:
                 id=channel_id,
             )
             response = request.execute()
-            
-            uploads_playlist_id = response['items'][0]['contentDetails']['relatedPlaylists'].get('uploads')
-            
+
+            uploads_playlist_id = response["items"][0]["contentDetails"][
+                "relatedPlaylists"
+            ].get("uploads")
+
             current_max = min(50, max_results - len(lst))
 
             playlist_request = self.service.playlistItems().list(
-                part='snippet',
+                part="snippet",
                 playlistId=uploads_playlist_id,
                 maxResults=current_max,
-                pageToken=next_page_token
+                pageToken=next_page_token,
             )
-            
+
             playlist_response = playlist_request.execute()
 
             for item in response["items"]:
@@ -439,3 +441,18 @@ class YoutubeTool:
                 break
 
         return VideoResults(total_results=total_results, videos=lst).model_dump_json()
+
+    def construct_hyperlink(self, id: str, type: str) -> str:
+        """
+        Construct a hyperlink based on provided ID and type
+        """
+        if type == "channel":
+            link = f"https://www.youtube.com/channel/{id}"
+        elif type == "playlist":
+            link = f"https://www.youtube.com/playlist?list={id}"
+        elif type == "video":
+            link = f"https://www.youtube.com/watch?v={id}"
+        else:
+            link = ""
+
+        return link
