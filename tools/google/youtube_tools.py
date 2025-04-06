@@ -213,3 +213,121 @@ class YoutubeTool:
         return ChannelResults(
             total_results=total_results, channels=lst
         ).model_dump_json()
+
+    def search_playlist(
+        self,
+        query: str,
+        published_after: str = None,
+        published_before: str = None,
+        region_code: str = "US",
+        order: str = "date",
+        max_results: int = 50,
+    ) -> str:
+        """
+        Searches for Youtube Playlist based on provided query.
+        """
+
+        lst = []
+        total_results = 0
+        next_page_token = None
+
+        while len(lst) < max_results:
+            current_max = min(50, max_results - len(lst))
+
+            request = self.service.search().list(
+                part="snippet",
+                q=query,
+                type="playlist",
+                maxResults=current_max,
+                order=order,
+                publishedAfter=published_after,
+                publishedBefore=published_before,
+                regionCode=region_code,
+                pageToken=next_page_token,
+            )
+            response = request.execute()
+
+            for item in response["items"]:
+                playlist_id = item["id"].get("playlistId")
+                playlist_title = item["snippet"].get("title")
+                channel_id = item["snippet"].get("channelId")
+                playlist_description = item["snippet"].get("description")
+                playlist_published_at = item["snippet"].get("publishedAt")
+                playlist_info = PlaylistInfo(
+                    playlist_id=playlist_id,
+                    playlist_title=playlist_title,
+                    channel_id=channel_id,
+                    description=playlist_description,
+                    published_at=playlist_published_at,
+                )
+                lst.append(playlist_info)
+
+            total_results = response["pageInfo"]["totalResults"]
+            next_page_token = response.get("nextPageToken")
+
+            if not next_page_token:
+                break
+
+        return PlaylistResults(
+            total_results=total_results, playlists=lst
+        ).model_dump_json()
+
+    def search_videos(
+        self,
+        query: str,
+        published_after: str = None,
+        published_before: str = None,
+        region_code: str = "US",
+        video_duration: str = "any",
+        order: str = "date",
+        max_results: int = 50,
+    ) -> str:
+        """
+        Searches for Youtube videos based on provided query.
+        """
+
+        lst = []
+        total_results = 0
+        next_page_token = None
+
+        while len(lst) < max_results:
+            current_max = min(50, max_results - len(lst))
+
+            request = self.service.search().list(
+                part="snippet",
+                q=query,
+                type="video",
+                maxResults=current_max,
+                order=order,
+                publishedAfter=published_after,
+                publishedBefore=published_before,
+                videoDuration=video_duration,
+                regionCode=region_code,
+                pageToken=next_page_token,
+            )
+            response = request.execute()
+
+            for item in response["items"]:
+                channel_id = item["id"].get("channelId")
+                channel_title = item["snippet"].get("channelTitle")
+                video_id = item["id"].get("videoId")
+                video_title = item["snippet"].get("itle")
+                video_description = item["snippet"].get("description")
+                video_published = item["snippet"].get("publishTime")
+                video_info = VideoInfo(
+                    channel_id=channel_id,
+                    channel_title=channel_title,
+                    video_id=video_id,
+                    video_title=video_title,
+                    description=video_description,
+                    published_at=video_published,
+                )
+                lst.append(video_info)
+
+            total_results = response["pageInfo"]["totalResults"]
+            next_page_token = response.get("nextPageToken")
+
+            if not next_page_token:
+                break
+
+        return VideoResults(total_results=total_results, videos=lst).model_dump_json()
