@@ -331,3 +331,60 @@ class YoutubeTool:
                 break
 
         return VideoResults(total_results=total_results, videos=lst).model_dump_json()
+
+    def get_video_info(self, video_ids: str, max_results: int = 50) -> str:
+        """
+        Retrieves detailed information about Youtube Videos based on the provided video IDs.
+        """
+
+        if len(video_ids) == 1:
+            video_ids = extreact_video_id(video_ids)
+            if not video_ids:
+                return "Error: Invalid Video ID or Url"
+
+        lst = []
+        total_results = 0
+        next_page_token = None
+
+        while len(lst) < max_results:
+            current_max = min(50, max_results - len(lst))
+
+            request = self.service.videos().list(
+                part="id,snippet,contentDetails,statistics,paidProductPlacementDetails,TopicDetails",
+                id=video_ids,
+                maxResulst=current_max,
+                pageToken=next_page_token,
+            )
+            response = request.execute()
+
+            for item in response["items"]:
+                snippet = item["snippet"]
+                content_details = item.get("contentDetails", {})
+                statistics = item.get("statistics", {})
+                topic_details = item.get("topicDetails", {})
+
+                video_info = VideoInfo(
+                    channel_id=snippet["channelId"],
+                    channel_title=snippet["channelTitle"],
+                    video_id=item["id"],
+                    video_title=snippet["title"],
+                    description=snippet.get("description", ""),
+                    published_at=snippet["publishedAt"],
+                    tags=snippet.get("tags", []),
+                    duration=content_details.get("duration"),
+                    dimension=content_details.get("dimension"),
+                    view_count=statistics.get("viewCount"),
+                    like_count=statistics.get("likeCount", 0),
+                    comment_count=statistics.get("commentCount", 0),
+                    topic_categories=topic_details.get("topicCategories", []),
+                    has_paid_product_placement=snippet.get("hasPaidPromotion", False),
+                )
+                lst.append(video_info)
+
+            total_results = response["pageInfo"]["totalResults"]
+            next_page_token = response.get("nextPageToken")
+
+            if not next_page_token:
+                break
+
+        return VideoResults(total_results=total_results, videos=lst).model_dump_json()
