@@ -388,3 +388,54 @@ class YoutubeTool:
                 break
 
         return VideoResults(total_results=total_results, videos=lst).model_dump_json()
+
+    def get_channel_videos(self, channel_id: str, max_results: int = 50) -> str:
+        """
+        Retrieves videos uploaded by Youtube channel based on provided channel id.
+        """
+
+        lst = []
+        total_results = 0
+        next_page_token = None
+
+        while len(lst) < max_results:
+
+            request = self.service.videos().list(
+                part="contentDetails",
+                id=channel_id,
+            )
+            response = request.execute()
+            
+            uploads_playlist_id = response['items'][0]['contentDetails']['relatedPlaylists'].get('uploads')
+            
+            current_max = min(50, max_results - len(lst))
+
+            playlist_request = self.service.playlistItems().list(
+                part='snippet',
+                playlistId=uploads_playlist_id,
+                maxResults=current_max,
+                pageToken=next_page_token
+            )
+            
+            playlist_response = playlist_request.execute()
+
+            for item in response["items"]:
+                snippet = item["snippet"]
+
+                video_info = VideoInfo(
+                    channel_id=snippet["channelId"],
+                    channel_title=snippet["channelTitle"],
+                    video_id=item["resourceId"]["id"],
+                    video_title=snippet["title"],
+                    description=snippet.get("description", ""),
+                    published_at=snippet["publishedAt"],
+                )
+                lst.append(video_info)
+
+            total_results = response["pageInfo"]["totalResults"]
+            next_page_token = response.get("nextPageToken")
+
+            if not next_page_token:
+                break
+
+        return VideoResults(total_results=total_results, videos=lst).model_dump_json()
