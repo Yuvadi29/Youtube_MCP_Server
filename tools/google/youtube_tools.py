@@ -84,3 +84,34 @@ def extreact_video_id(input_str: str) -> str | None:
         return input_str
 
     return None
+
+
+class YoutubeTool:
+    """
+    Toolkit for interacting with Youtube Data API
+    """
+
+    API_NAME = "youtube"
+    API_VERSION = "v3"
+    SCOPES = ["https://www.googleapis.com/auth/youtube.readonly"]
+
+    def __init__(self, client_secret: str) -> None:
+        self.client_secret - client_secret
+        self._init_youtube_service()
+
+    def _init_youtube_service(self):
+        """
+        Initialize the Youtube Data API service.
+        """
+        self.service = create_service(
+            self.client_secret, self.API_NAME, self.API_VERSION, self.SCOPES
+        )
+        if not self.service:
+            raise Exception("Failed to create Youtube Service")
+
+    @property
+    def youtube_service(self) -> Resource:
+        """
+        Return Youtube Data API service instance
+        """
+        return self.service
